@@ -65,10 +65,11 @@ class DarkJNN(nn.Module):
 
         self.reorg = ReorgLayer()
 
-    def forward(self, query, target, target_boxes, training=False):
+    def forward(self, query, target, target_boxes, num_boxes=None, training=False):
 
         output = self.conv0(target)
         output = self.conv1(output)
+        output = self.maxpool1(output)
         qoutput = self.conv0(query)
         qoutput = self.conv1(qoutput)
         output = torch.cat((output, qoutput), 1)
@@ -99,7 +100,7 @@ class DarkJNN(nn.Module):
 
         # 5dim tensor represents (t_x, t_y, t_h, t_w, t_c)
         # reorganize the output tensor to shape (B, H * W * num_anchors, coords + conf)
-        output = output.permute(0, 2, 3, 1).contiguous().view(bsize, h * w * self.num_anchors, 5)
+        output = output.permute(0, 2, 3, 1).contiguous().view(bsize, h * w * len(Config.anchors), 5)
 
         # activate the output tensor
         # `sigmoid` for t_x, t_y, t_c; `exp` for t_h, t_w;
@@ -107,16 +108,17 @@ class DarkJNN(nn.Module):
 
         xy_pred = torch.sigmoid(output[:, :, 0:2])
         conf_pred = torch.sigmoid(output[:, :, 4:5])
-        hw_pred = torch.exp(out[:, :, 2:4])
+        hw_pred = torch.exp(output[:, :, 2:4])
         delta_pred = torch.cat([xy_pred, hw_pred], dim=-1)
 
         if training:
             output_variable = (delta_pred, conf_pred)
             output_data = [v.data for v in output_variable]
-            target_data = build_target(output_data, target_boxes, h, w)
+            gt_data = (target_boxes, num_boxes)
+            target_data = build_target(output_data, gt_data, h, w)
 
             target_variable = [Variable(v) for v in target_data]
-            box_loss, iou_loss, class_loss = yolo_loss(output_variable, target_variable)
+            box_loss, iou_loss = yolo_loss(output_variable, target_variable)
 
             return box_loss, iou_loss
 

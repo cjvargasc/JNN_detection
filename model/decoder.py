@@ -1,9 +1,4 @@
 """ https://github.com/tztztztztz/yolov2.pytorch """
-# --------------------------------------------------------
-# Pytorch Yolov2
-# Licensed under The MIT License [see LICENSE for details]
-# Written by Jingru Tan
-# --------------------------------------------------------
 
 from __future__ import absolute_import
 from __future__ import division
@@ -14,40 +9,26 @@ from utils.bbox import generate_all_anchors, xywh2xxyy, box_transform_inv, xxyy2
 from config import Config as cfg
 
 
-def filter_boxes(boxes_pred, conf_pred, classes_pred, confidence_threshold=0.6):
+def filter_boxes(boxes_pred, conf_pred, confidence_threshold=0.6):
     """
     Filter boxes whose confidence is lower than a given threshold
 
     Arguments:
     boxes_pred -- tensor of shape (H * W * num_anchors, 4) (x1, y1, x2, y2) predicted boxes
     conf_pred -- tensor of shape (H * W * num_anchors, 1)
-    classes_pred -- tensor of shape (H * W * num_anchors, num_classes)
     threshold -- float, threshold used to filter boxes
 
     Returns:
     filtered_boxes -- tensor of shape (num_positive, 4)
     filtered_conf -- tensor of shape (num_positive, 1)
-    filtered_cls_max_conf -- tensor of shape (num_positive, num_classes)
-    filtered_cls_max_id -- tensor of shape (num_positive, num_classes)
     """
-
-    # multiply class scores and objectiveness score
-    # use class confidence score
-    # TODO: use objectiveness (IOU) score or class confidence score
-    cls_max_conf, cls_max_id = torch.max(classes_pred, dim=-1, keepdim=True)
-    cls_conf = conf_pred * cls_max_conf
-
-    pos_inds = (cls_conf > confidence_threshold).view(-1)
+    pos_inds = (conf_pred > confidence_threshold).view(-1)
 
     filtered_boxes = boxes_pred[pos_inds, :]
 
     filtered_conf = conf_pred[pos_inds, :]
 
-    filtered_cls_max_conf = cls_max_conf[pos_inds, :]
-
-    filtered_cls_max_id = cls_max_id[pos_inds, :]
-
-    return filtered_boxes, filtered_conf, filtered_cls_max_conf, filtered_cls_max_id.float()
+    return filtered_boxes, filtered_conf
 
 
 def nms(boxes, scores, threshold):
@@ -128,7 +109,7 @@ def scale_boxes(boxes, im_info):
     w = im_info['width']
 
     input_h, input_w = cfg.im_h, cfg.im_h
-    scale_h, scale_w = input_h / h, input_w / w
+    scale_h, scale_w = input_h / float(h), input_w / float(w)
 
     # scale the boxes
     boxes *= cfg.strides
@@ -162,7 +143,7 @@ def decode(model_output, im_info, conf_threshold=0.6, nms_threshold=0.4):
 
 
     Returns:
-    detections -- tensor of shape (None, 7) (x1, y1, x2, y2, cls_conf, cls)
+    detections -- tensor of shape (None, 7) (x1, y1, x2, y2, conf)
     """
 
     deltas = model_output[0].cpu()
@@ -172,7 +153,7 @@ def decode(model_output, im_info, conf_threshold=0.6, nms_threshold=0.4):
     boxes = generate_prediction_boxes(deltas)
 
     # filter boxes on confidence score
-    boxes, conf, cls_max_conf = filter_boxes(boxes, conf, conf_threshold)
+    boxes, conf = filter_boxes(boxes, conf, conf_threshold)
 
     # no detection !
     if boxes.size(0) == 0:
@@ -187,7 +168,7 @@ def decode(model_output, im_info, conf_threshold=0.6, nms_threshold=0.4):
     conf_keep = conf[keep, :]
 
     #
-    seq = [boxes_keep, conf_keep, cls_max_conf]
+    seq = [boxes_keep, conf_keep]
 
     return torch.cat(seq, dim=1)
     """ 

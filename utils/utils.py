@@ -19,41 +19,30 @@ class Utils:
 
             im_data -- tensor of shape (3, H, W)
             boxes -- tensor of shape (N, 4)
-            gt_classes -- tensor of shape (N)
             num_obj -- tensor of shape (1)
 
             Returns:
 
             tuple
             1) tensor of shape (batch_size, 3, H, W)
+            1) tensor of shape (batch_size, 3, H, W)
             2) tensor of shape (batch_size, N, 4)
-            3) tensor of shape (batch_size, N)
             4) tensor of shape (batch_size, 1)
-
-
+        """
 
         # kind of hack, this will break down a list of tuple into
         # individual list
         bsize = len(batch)
-        im_data, boxes, gt_classes, num_obj = zip(*batch)
+        im_dataq, im_datat, boxes, num_obj= zip(*batch)
         max_num_obj = max([x.item() for x in num_obj])
         padded_boxes = torch.zeros((bsize, max_num_obj, 4))
-        padded_classes = torch.zeros((bsize, max_num_obj,))
 
         for i in range(bsize):
             padded_boxes[i, :num_obj[i], :] = boxes[i]
-            padded_classes[i, :num_obj[i]] = gt_classes[i]
 
-        return torch.stack(im_data, 0), padded_boxes, padded_classes, torch.stack(num_obj, 0)
-        """
-        items = list(zip(*batch))
-        items[0] = default_collate(items[0])
-        items[1] = default_collate(items[1])
-        items[2] = list(items[2])
-        return items
+        return torch.stack(im_dataq, 0), torch.stack(im_datat, 0), padded_boxes, torch.stack(num_obj, 0)
 
-
-def augment_img(img, boxes, gt_classes):
+def augment_img(img, boxes):
     """
     Apply data augmentation. (https://github.com/tztztztztz)
     1. convert color to HSV
@@ -66,13 +55,10 @@ def augment_img(img, boxes, gt_classes):
     Arguments:
     img -- PIL.Image object
     boxes -- numpy array of shape (N, 4) N is number of boxes, (x1, y1, x2, y2)
-    gt_classes -- numpy array of shape (N). ground truth class index 0 ~ (N-1)
-    im_info -- dictionary {width:, height:}
 
     Returns:
     au_img -- numpy array of shape (H, W, 3)
     au_boxes -- numpy array of shape (N, 4) N is number of boxes, (x1, y1, x2, y2)
-    au_gt_classes -- numpy array of shape (N). ground truth class index 0 ~ (N-1)
     """
 
     # img = np.array(img).astype(np.float32)
@@ -85,11 +71,10 @@ def augment_img(img, boxes, gt_classes):
         if boxes_t.shape[0] > 0:
             img = img_t
             boxes = boxes_t
-            gt_classes = gt_classes[keep]
             break
 
     img = random_distort(img, Config.hue, Config.saturation, Config.exposure)
-    return img, boxes, gt_classes
+    return img, boxes
 
 
 def random_scale_translation(img, boxes, jitter=0.2):
@@ -99,7 +84,6 @@ def random_scale_translation(img, boxes, jitter=0.2):
     img -- PIL.Image
     boxes -- numpy array of shape (N, 4) N is number of boxes
     factor -- max scale size
-    im_info -- dictionary {width:, height:}
 
     Returns:
     im_data -- numpy.ndarray
@@ -123,6 +107,7 @@ def random_scale_translation(img, boxes, jitter=0.2):
     cropped = img.crop((pl, pt, pl + sw - 1, pt + sh - 1))
 
     # update boxes accordingly
+    #print("boxes: ", boxes)
     boxes[:, 0::2] -= pl
     boxes[:, 1::2] -= pt
 

@@ -34,12 +34,12 @@ class Tester:
 
         print("dataset: ", Config.training_dir)
 
-        folder_dataset = dset.ImageFolder(root=Config.training_dir)
+        folder_dataset = dset.ImageFolder(root=Config.testing_dir)
         dataset = DatasetJNN(imageFolderDataset=folder_dataset, is_training=False)
 
         dataloader = DataLoader(dataset, shuffle=False, num_workers=0, batch_size=1)
 
-        model = DarkJNN
+        model = DarkJNN()
 
         checkpoint = torch.load(model_path)
         model.load_state_dict(checkpoint['model'])
@@ -59,20 +59,23 @@ class Tester:
 
                 model_output = model(img0, img1, targets)
 
-                im_info = {'width': im_infos[0], 'height': im_infos[1]}
+                im_info = {'width': im_infos[0].item(), 'height': im_infos[1].item()}
                 output = [item[0].data for item in model_output]
 
                 detections = decode(output, im_info, conf_threshold=Config.conf_thresh,nms_threshold=Config.nms_thresh)
 
                 if len(detections) > 0:
+
                     # mAP files
+                    im_id = im_infos[2][0].split('.')[0]
+
                     detection_str = ""
                     gt_str = ""
 
-                    f = open(Config.mAP_path + "groundtruths/" + im_infos[2] + ".txt", "a+")
+                    f = open(Config.mAP_path + "groundtruths/" + im_id + ".txt", "a+")
                     for box_idx in range(len(targets)):
 
-                        gt_str += label + " " \
+                        gt_str += label[0] + " " \
                                   + str(targets[0][box_idx][0].item()) + " " \
                                   + str(targets[0][box_idx][1].item()) + " " \
                                   + str(targets[0][box_idx][2].item()) + " " \
@@ -82,10 +85,10 @@ class Tester:
 
                     f.close()
 
-                    f = open(Config.mAP_path + "detections/" + im_infos[2] + ".txt", "a+")
+                    f = open(Config.mAP_path + "detections/" + im_id + ".txt", "a+")
                     for detection in detections:
-                        detection_str += label + " " \
-                                      + str(detection[5].item()) + " "\
+                        detection_str += label[0] + " " \
+                                      + str(detection[4].item()) + " "\
                                       + str(detection[0].item()) + " "\
                                       + str(detection[1].item()) + " "\
                                       + str(detection[2].item()) + " "\

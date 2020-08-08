@@ -25,7 +25,7 @@ class Trainer:
 
         folder_dataset = dset.ImageFolder(root=Config.training_dir)
 
-        dataset = DatasetJNN(imageFolderDataset=folder_dataset, should_invert=False)
+        dataset = DatasetJNN(imageFolderDataset=folder_dataset)
 
         train_dataloader = DataLoader(dataset,
                                       shuffle=True,
@@ -40,7 +40,9 @@ class Trainer:
 
         model = DarkJNN()
 
-        optimizer = optim.SGD(model.parameters(), lr=Config.lr,
+        lr = Config.lr
+
+        optimizer = optim.SGD(model.parameters(), lr=lr,
                               momentum=Config.momentum, weight_decay=Config.weight_decay)
 
         starting_ep = 0
@@ -69,7 +71,7 @@ class Trainer:
             average_epoch_loss = 0
             average_loc_loss = 0
             average_conf_loss = 0
-            average_nconf_loss = 0
+            #average_nconf_loss = 0
 
             if epoch in Config.decay_lrs:
                 lr = Config.decay_lrs[epoch]
@@ -78,12 +80,12 @@ class Trainer:
 
             for i, data in enumerate(train_dataloader, 0):
 
-                img0, img1, targets = data
-                img0, img1, targets = Variable(img0).cuda(), Variable(img1).cuda(), targets.cuda()
+                img0, img1, targets, num_obj = data
+                img0, img1, targets, num_obj = Variable(img0).cuda(), Variable(img1).cuda(), targets.cuda(), num_obj.cuda()
 
-                loc_l, conf_l, nconf_l = model(img0, img1, targets, training=True)
+                loc_l, conf_l = model(img0, img1, targets, num_obj, training=True)
 
-                loss = loc_l.mean() + conf_l.mean() + nconf_l.mean()
+                loss = loc_l.mean() + conf_l.mean()# + nconf_l.mean()
 
                 optimizer.zero_grad()
 
@@ -93,7 +95,7 @@ class Trainer:
                 average_epoch_loss += loss
                 average_loc_loss += loc_l
                 average_conf_loss += conf_l
-                average_nconf_loss += nconf_l
+                #average_nconf_loss += nconf_l
 
             end_time = time.time() - start_time
             print("time: ", end_time)
@@ -105,6 +107,8 @@ class Trainer:
             loss_history.append(average_epoch_loss.item())
 
             if average_epoch_loss < best_loss:
+                print("------Best:")
+                break_counter = 0
                 best_loss = average_epoch_loss
                 best_epoch = epoch
                 save_name = Config.best_model_path
@@ -127,7 +131,7 @@ class Trainer:
 
             if break_counter >= 20:
                 print("Training break...")
-                break
+                #break
 
             break_counter += 1
 

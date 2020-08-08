@@ -14,8 +14,10 @@ def build_target(output, gt_data, H, W):
     Build the training target for output tensor
     Arguments:
     output_data -- tuple (delta_pred_batch, conf_pred_batch), output data of the yolo network
-    gt_data -- gt_boxes_batch tensor of shape (B, N, 4), ground truth boxes, normalized values
-                   (x1, y1, x2, y2) range 0~1
+    gt_data -- tuple (gt_boxes_batch, num_boxes_batch), ground truth data
+
+    gt_boxes_batch -- tensor of shape (B, N, 4), ground truth boxes, normalized values
+                       (x1, y1, x2, y2) range 0~1
 
     delta_pred_batch -- tensor of shape (B, H * W * num_anchors, 4), predictions of delta σ(t_x), σ(t_y), σ(t_w), σ(t_h)
     conf_pred_batch -- tensor of shape (B, H * W * num_anchors, 1), prediction of IoU score σ(t_c)
@@ -29,8 +31,8 @@ def build_target(output, gt_data, H, W):
     delta_pred_batch = output[0]
     conf_pred_batch = output[1]
 
-    gt_boxes_batch = gt_data
-    num_boxes_batch = gt_data[2] ########## TODO get size from gt boxes
+    gt_boxes_batch = gt_data[0]
+    num_boxes_batch = gt_data[1]
 
     bsize = delta_pred_batch.size(0)
 
@@ -39,7 +41,7 @@ def build_target(output, gt_data, H, W):
 
     # init the output tensor
     iou_target = delta_pred_batch.new_zeros((bsize, H * W, num_anchors, 1))
-    iou_mask = delta_pred_batch.new_ones((bsize, H * W, num_anchors, 1)) * cfg.noobject_scale
+    iou_mask = delta_pred_batch.new_ones((bsize, H * W, num_anchors, 1)) * Config.noobject_scale
 
     box_target = delta_pred_batch.new_zeros((bsize, H * W, num_anchors, 4))
     box_mask = delta_pred_batch.new_zeros((bsize, H * W, num_anchors, 1))
