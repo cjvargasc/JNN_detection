@@ -44,3 +44,8 @@ Joint Neural Networks for One-shot ObjectRecognition and Detection. Camilo Jose 
 <img src="https://github.com/cjvargasc/JNN_detection/blob/master/imgs/GEquery.04.2020.png" width="25%">-<img src="https://github.com/cjvargasc/JNN_detection/blob/master/imgs/GEtarget.png" width="25%">
 
 <img src="https://github.com/cjvargasc/JNN_detection/blob/master/imgs/athalonquery.png" width="25%">-<img src="https://github.com/cjvargasc/JNN_detection/blob/master/imgs/athalontarget.png" width="25%">
+
+## acknowledgement
+This code is based on the following repositories:
+* https://github.com/tztztztztz/yolov2.pytorch
+* https://github.com/uvipen/Yolo-v2-pytorch
