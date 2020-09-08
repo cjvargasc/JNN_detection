@@ -38,10 +38,14 @@ class DarkJNN(nn.Module):
 
         darknet19 = Darknet19()
 
+        # darknet19.load_weights()
+
         # JNN darknet backbone
         self.conv0 = nn.Sequential(darknet19.layer0)
         self.conv1 = nn.Sequential(darknet19.layer1)
-        self.maxpool1 = nn.MaxPool2d(2, 2)
+
+        self.maxpool1 = darknet19.layer12
+
         self.joint1 = conv_bn_leaky(128, 64, kernel_size=3, return_module=True)
 
         self.conv2 = nn.Sequential(darknet19.layer2)

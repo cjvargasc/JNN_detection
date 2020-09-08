@@ -119,7 +119,7 @@ class DatasetJNN(Dataset):
 
             boxes = torch.from_numpy(boxes)
 
-            return img0, img1, boxes, self.imageFolderDataset.classes[img0_tuple[1]], (w, h, target_id)
+            return img0, img1, boxes, self.imageFolderDataset.classes[img0_tuple[1]], (w, h, query_id, target_id)
 
     def __len__(self):
         return len(self.imageFolderDataset.imgs)

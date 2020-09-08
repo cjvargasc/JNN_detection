@@ -33,7 +33,7 @@ class Utils:
         # kind of hack, this will break down a list of tuple into
         # individual list
         bsize = len(batch)
-        im_dataq, im_datat, boxes, num_obj= zip(*batch)
+        im_dataq, im_datat, boxes, num_obj = zip(*batch)
         max_num_obj = max([x.item() for x in num_obj])
         padded_boxes = torch.zeros((bsize, max_num_obj, 4))
 

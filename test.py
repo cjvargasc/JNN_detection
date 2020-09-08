@@ -4,6 +4,7 @@ from torch.autograd import Variable
 import torchvision.transforms as transforms
 import torchvision.datasets as dset
 
+import os
 import cv2
 import numpy as np
 from PIL import Image
@@ -12,6 +13,8 @@ from config import Config
 from model.darkJNN import DarkJNN
 from model.decoder import decode
 from dataloaders.datasetJNN import DatasetJNN
+from dataloaders.datasetJNN_VOC import DatasetJNN_VOC
+from dataloaders.datasetJNN_COCO import DatasetJNN_COCO
 
 
 class Tester:
@@ -22,20 +25,26 @@ class Tester:
         print("testing...")
 
         Config.batch_size = 1
-        iou_thresh = 0.5
 
+        Config.model_path = "testmodel_last.pt"
         print("mAP files output path: " + Config.mAP_path)
 
-        model_path = Config.best_model_path
+        model_path = Config.model_path
 
         print("model: ", model_path)
         print("conf: ", Config.conf_thresh)
-        print("iou thresh:  ", iou_thresh)
+        print("iou thresh:  ", Config.conf_thresh)
 
-        print("dataset: ", Config.training_dir)
-
-        folder_dataset = dset.ImageFolder(root=Config.testing_dir)
-        dataset = DatasetJNN(imageFolderDataset=folder_dataset, is_training=False)
+        if Config.dataset == "VOC":
+            print("dataset: ", Config.voc_dataset_dir)
+            dataset = DatasetJNN_VOC(Config.voc_dataset_dir, mode="test", year="2007", is_training=False)
+        elif Config.dataset == "coco":
+            print("dataset: ", Config.coco_dataset_dir)
+            dataset = DatasetJNN_COCO(Config.coco_dataset_dir, is_training=False)
+        else:
+            print("dataset: ", Config.testing_dir)
+            folder_dataset = dset.ImageFolder(root=Config.testing_dir)
+            dataset = DatasetJNN(imageFolderDataset=folder_dataset, is_training=False)
 
         dataloader = DataLoader(dataset, shuffle=False, num_workers=0, batch_size=1)
 
@@ -67,12 +76,12 @@ class Tester:
                 if len(detections) > 0:
 
                     # mAP files
-                    im_id = im_infos[2][0].split('.')[0]
+                    pair_id = im_infos[2][0].split('.')[0] + "_" +im_infos[3][0].split('.')[0]
 
                     detection_str = ""
                     gt_str = ""
 
-                    f = open(Config.mAP_path + "groundtruths/" + im_id + ".txt", "a+")
+                    f = open(Config.mAP_path + "groundtruths/" + pair_id + ".txt", "a+")
                     for box_idx in range(len(targets)):
 
                         gt_str += label[0] + " " \
@@ -80,12 +89,13 @@ class Tester:
                                   + str(targets[0][box_idx][1].item()) + " " \
                                   + str(targets[0][box_idx][2].item()) + " " \
                                   + str(targets[0][box_idx][3].item()) + "\n"
-                        if not (gt_str in f.readlines()):
-                            f.write(gt_str)
 
+                    f.seek(0)
+                    if not (gt_str in f.readlines()):
+                        f.write(gt_str)
                     f.close()
 
-                    f = open(Config.mAP_path + "detections/" + im_id + ".txt", "a+")
+                    f = open(Config.mAP_path + "detections/" + pair_id + ".txt", "a+")
                     for detection in detections:
                         detection_str += label[0] + " " \
                                       + str(detection[4].item()) + " "\
@@ -93,9 +103,10 @@ class Tester:
                                       + str(detection[1].item()) + " "\
                                       + str(detection[2].item()) + " "\
                                       + str(detection[3].item()) + "\n"
-                        if not (detection_str in f.readlines()):
-                            f.write(detection_str)
 
+                    f.seek(0)
+                    if not (detection_str in f.readlines()):
+                        f.write(detection_str)
                     f.close()
 
     @staticmethod

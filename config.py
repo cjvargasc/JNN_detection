@@ -1,9 +1,15 @@
 class Config:
 
-    ####### Dataset
-    training_dir = "/home/mmv/Documents/3.datasets/openlogo/preproc/3/training/"
-    testing_dir = "/home/mmv/Documents/3.datasets/openlogo/preproc/3/testing/"
-    annotations_dir = "/home/mmv/Documents/3.datasets/openlogo/Annotations/"
+    ####### Datasets
+    dataset = "VOC"  # {VOC, coco, other}
+    # paths to [other] datasets
+    training_dir = "<path to dataset>/training/"
+    testing_dir = "<path to dataset>/testing/"
+    annotations_dir = "<path to dataset>/Annotations/"
+
+    # paths to COCO and VOC
+    voc_dataset_dir = "<path to VOC>/VOCdevkit/"
+    coco_dataset_dir = "<path to coco>"
 
     ####### Model params
     batch_size = 16
@@ -42,7 +48,8 @@ class Config:
     conf_thresh = 0.5
     nms_thresh = .45
 
-    mAP_path = "/home/mmv/Documents/2.projects/Object-Detection-Metrics-master/"  # path to mAP repository
+    # path to mAP repository
+    mAP_path = "<path to /Object-Detection-Metrics-master/>"
 
     ####### Loss
     object_scale = 5

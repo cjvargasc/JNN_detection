@@ -8,6 +8,8 @@ from torch.utils.data import DataLoader
 from torch import optim
 
 from dataloaders.datasetJNN import DatasetJNN
+from dataloaders.datasetJNN_VOC import DatasetJNN_VOC
+from dataloaders.datasetJNN_COCO import DatasetJNN_COCO
 from model.darkJNN import DarkJNN
 from utils.utils import Utils
 from config import Config
@@ -21,11 +23,17 @@ class Trainer:
         torch.cuda.manual_seed(123)
 
         print("Training process initialized...")
-        print("dataset: ", Config.training_dir)
 
-        folder_dataset = dset.ImageFolder(root=Config.training_dir)
-
-        dataset = DatasetJNN(imageFolderDataset=folder_dataset)
+        if Config.dataset == "VOC":
+            print("dataset: ", Config.voc_dataset_dir)
+            dataset = DatasetJNN_VOC(Config.voc_dataset_dir)
+        elif Config.dataset == "coco":
+            print("dataset: ", Config.coco_dataset_dir)
+            dataset = DatasetJNN_COCO(Config.coco_dataset_dir)
+        else:
+            print("dataset: ", Config.training_dir)
+            folder_dataset = dset.ImageFolder(root=Config.training_dir)
+            dataset = DatasetJNN(imageFolderDataset=folder_dataset)
 
         train_dataloader = DataLoader(dataset,
                                       shuffle=True,
@@ -68,10 +76,12 @@ class Trainer:
 
             start_time = time.time()
 
+            average_model_time = 0
+            average_optim_time = 0
+
             average_epoch_loss = 0
             average_loc_loss = 0
             average_conf_loss = 0
-            #average_nconf_loss = 0
 
             if epoch in Config.decay_lrs:
                 lr = Config.decay_lrs[epoch]
@@ -80,25 +90,36 @@ class Trainer:
 
             for i, data in enumerate(train_dataloader, 0):
 
+                if (i % 3000 == 0):
+                    print(str(i) + "/" + str(len(train_dataloader)))  # progress
+
                 img0, img1, targets, num_obj = data
                 img0, img1, targets, num_obj = Variable(img0).cuda(), Variable(img1).cuda(), targets.cuda(), num_obj.cuda()
 
+                model_timer = time.time()
                 loc_l, conf_l = model(img0, img1, targets, num_obj, training=True)
+                loss = loc_l.mean() + conf_l.mean()
+                model_timer = time.time() - model_timer
+                average_model_time += model_timer
 
-                loss = loc_l.mean() + conf_l.mean()# + nconf_l.mean()
-
+                optim_timer = time.time()
                 optimizer.zero_grad()
-
                 loss.backward()
                 optimizer.step()
+                optim_timer = time.time() - optim_timer
+                average_optim_time += optim_timer
 
                 average_epoch_loss += loss
                 average_loc_loss += loc_l
                 average_conf_loss += conf_l
-                #average_nconf_loss += nconf_l
 
             end_time = time.time() - start_time
             print("time: ", end_time)
+
+            others_timer = end_time - average_model_time - average_optim_time
+            print("data+ time: ", others_timer)
+            print("model time: ", average_model_time)
+            print("optim time: ", average_optim_time)
 
             average_epoch_loss = average_epoch_loss / i
 
@@ -116,7 +137,7 @@ class Trainer:
                     'model': model.state_dict(),
                     'optimizer': optimizer.state_dict(),
                     'epoch': epoch,
-                    'loss': loss,
+                    'loss': average_epoch_loss,
                     'lr': lr
                 }, save_name)
 
@@ -125,10 +146,11 @@ class Trainer:
                 'model': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
                 'epoch': epoch,
-                'loss': loss,
+                'loss': average_epoch_loss,
                 'lr': lr
             }, save_name)
 
+            print("")
             if break_counter >= 20:
                 print("Training break...")
                 #break
