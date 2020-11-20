@@ -10,6 +10,7 @@ from torch import optim
 from dataloaders.datasetJNN import DatasetJNN
 from dataloaders.datasetJNN_VOC import DatasetJNN_VOC
 from dataloaders.datasetJNN_COCO import DatasetJNN_COCO
+from dataloaders.datasetJNN_COCOsplit import DatasetJNN_COCOsplit
 from model.darkJNN import DarkJNN
 from utils.utils import Utils
 from config import Config
@@ -30,6 +31,9 @@ class Trainer:
         elif Config.dataset == "coco":
             print("dataset: ", Config.coco_dataset_dir)
             dataset = DatasetJNN_COCO(Config.coco_dataset_dir)
+        elif Config.dataset == "coco_split":
+            print("dataset: ", Config.coco_dataset_dir, "--Split: ", Config.coco_split)
+            dataset = DatasetJNN_COCOsplit(Config.coco_dataset_dir, Config.coco_split)
         else:
             print("dataset: ", Config.training_dir)
             folder_dataset = dset.ImageFolder(root=Config.training_dir)
@@ -61,6 +65,7 @@ class Trainer:
             starting_ep = checkpoint['epoch'] + 1
             lr = checkpoint['lr']
             Trainer.adjust_learning_rate(optimizer, lr)
+            print("starting epoch: ", starting_ep)
 
         model.cuda()
         model.train()
@@ -90,8 +95,8 @@ class Trainer:
 
             for i, data in enumerate(train_dataloader, 0):
 
-                if (i % 3000 == 0):
-                    print(str(i) + "/" + str(len(train_dataloader)))  # progress
+                #if (i % 3000 == 0):
+                #    print(str(i) + "/" + str(len(train_dataloader)))  # progress
 
                 img0, img1, targets, num_obj = data
                 img0, img1, targets, num_obj = Variable(img0).cuda(), Variable(img1).cuda(), targets.cuda(), num_obj.cuda()

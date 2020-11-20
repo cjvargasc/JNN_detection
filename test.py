@@ -15,6 +15,7 @@ from model.decoder import decode
 from dataloaders.datasetJNN import DatasetJNN
 from dataloaders.datasetJNN_VOC import DatasetJNN_VOC
 from dataloaders.datasetJNN_COCO import DatasetJNN_COCO
+from dataloaders.datasetJNN_COCOsplit import DatasetJNN_COCOsplit
 
 
 class Tester:
@@ -26,7 +27,8 @@ class Tester:
 
         Config.batch_size = 1
 
-        Config.model_path = "testmodel_last.pt"
+        #Config.model_path = "testmodel_last.pt"
+        Config.model_path = "/home/mmv/Documents/2.projects/JNN_detection/trained_models/dJNN_COCOsplit4/testmodel_last_split4.pt"
         print("mAP files output path: " + Config.mAP_path)
 
         model_path = Config.model_path
@@ -41,6 +43,9 @@ class Tester:
         elif Config.dataset == "coco":
             print("dataset: ", Config.coco_dataset_dir)
             dataset = DatasetJNN_COCO(Config.coco_dataset_dir, is_training=False)
+        elif Config.dataset == "coco_split":
+            print("dataset: ", Config.coco_dataset_dir, "--Split: ", Config.coco_split)
+            dataset = DatasetJNN_COCOsplit(Config.coco_dataset_dir, Config.coco_split, is_training=False)
         else:
             print("dataset: ", Config.testing_dir)
             folder_dataset = dset.ImageFolder(root=Config.testing_dir)
@@ -52,6 +57,7 @@ class Tester:
 
         checkpoint = torch.load(model_path)
         model.load_state_dict(checkpoint['model'])
+        print("epoch: ", str(checkpoint['epoch'] + 1))
 
         model.cuda()
         model.eval()
@@ -84,7 +90,7 @@ class Tester:
                     f = open(Config.mAP_path + "groundtruths/" + pair_id + ".txt", "a+")
                     for box_idx in range(len(targets)):
 
-                        gt_str += label[0] + " " \
+                        gt_str += label[0].replace(" ", "_") + " " \
                                   + str(targets[0][box_idx][0].item()) + " " \
                                   + str(targets[0][box_idx][1].item()) + " " \
                                   + str(targets[0][box_idx][2].item()) + " " \
@@ -97,7 +103,7 @@ class Tester:
 
                     f = open(Config.mAP_path + "detections/" + pair_id + ".txt", "a+")
                     for detection in detections:
-                        detection_str += label[0] + " " \
+                        detection_str += label[0].replace(" ", "_") + " " \
                                       + str(detection[4].item()) + " "\
                                       + str(detection[0].item()) + " "\
                                       + str(detection[1].item()) + " "\
@@ -110,38 +116,16 @@ class Tester:
                     f.close()
 
     @staticmethod
-    def test_one():
+    def test_one_OL():
+        """ Tests a a pair of images """
 
         print("testing one image...")
-        """
-        Config.batch_size = 1
-        conf_threshs = 0.3
-        iou_thresh = 0.5
 
-        model_path = Config.best_model_path
-        im_path = "path_to_img"
+        Config.model_path = "/home/mmv/Documents/2.projects/JNN_detection/trained_models/dJNN_COCOsplit2/testmodel_last_split2.pt"
 
-        print("model: ", model_path)
-        print("conf: ", conf_threshs)
-        print("iou thresh:  ", iou_thresh)
-        print("im_path: ", im_path)
+        model_path = Config.model_path
 
-        classes = ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow',
-                   'diningtable', 'dog', 'horse', 'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train',
-                   'tvmonitor']
-
-        pil_im = Image.open(im_path)
-
-        cv_im = np.array(pil_im)
-        cv_im = cv_im[:, :, ::-1].copy()
-
-        im_infos = torch.FloatTensor([pil_im.size[0], pil_im.size[1]])
-        pil_im = pil_im.resize((Config.im_w, Config.im_h))
-        transform = transforms.Compose([transforms.ToTensor()])
-        pil_im = transform(pil_im)
-        pil_im = torch.unsqueeze(pil_im, 0).cuda()
-
-        model = Yolov2()
+        model = DarkJNN()
 
         checkpoint = torch.load(model_path)
         model.load_state_dict(checkpoint['model'])
@@ -149,26 +133,131 @@ class Tester:
         model.cuda()
         model.eval()
 
+        # (3m1, 3m6), (rbc1, rbc43), hp(33971473, 70609284), blizzard(1, 6), gen_electric(7, 31), warner(10, 18)
+        # goodyear(13, 20), airhawk(12, 1), gap(34, 36), levis(14, 30)
+        q_name = "000000008629"
+        t_name = "000000209530"
+        q_im = Image.open("/home/mmv/Documents/3.datasets/coco/val2017/" + q_name + ".jpg")
+        t_im = Image.open("/home/mmv/Documents/3.datasets/coco/val2017/" + t_name + ".jpg")
+
+        w, h = t_im.size[0], t_im.size[1]
+        im_infos = (w, h, q_name, t_name)
+
+        cv_im = np.array(t_im)
+        cv_im = cv_im[:, :, ::-1].copy()
+
+        q_im = q_im.resize((Config.imq_w, Config.imq_h))
+        t_im = t_im.resize((Config.im_w, Config.im_h))
+
+        # To float tensors
+        q_im = torch.from_numpy(np.array(q_im)).float() / 255
+        t_im = torch.from_numpy(np.array(t_im)).float() / 255
+        img0 = q_im.permute(2, 0, 1)
+        img1 = t_im.permute(2, 0, 1)
+        img0 = torch.unsqueeze(img0, 0)
+        img1 = torch.unsqueeze(img1, 0)
+
         with torch.no_grad():
+#
+            img0, img1 = Variable(img0).cuda(), Variable(img1).cuda()
 
-            im_data_variable = Variable(pil_im).cuda()
-
-            yolo_outputs = model(im_data_variable)
+            model_output = model(img0, img1, [])
 
             im_info = {'width': im_infos[0], 'height': im_infos[1]}
-            output = [item[0].data for item in yolo_outputs]
+            output = [item[0].data for item in model_output]
 
-            detections = yolo_eval(output, im_info, conf_threshold=conf_threshs,
-                                   nms_threshold=Config.nms_thresh)
+            detections = decode(output, im_info, conf_threshold=Config.conf_thresh, nms_threshold=Config.nms_thresh)
 
             if len(detections) > 0:
 
                 for detection in detections:
-                    cv_im = cv2.rectangle(cv_im, (detection[0], detection[1]),
-                                          (detection[2], detection[3]), (0, 0, 255), 2)
-                    cv_im = cv2.putText(cv_im, classes[int(detection[6].item())], (detection[0], detection[1]),
-                                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+                    start_pt = (int(detection[0].item()), int(detection[1].item()))
+                    end_pt = (int(detection[2].item()), int(detection[3].item()))
+                    image = cv2.rectangle(cv_im, start_pt, end_pt, (0, 255, 0), 3)
+                    print(start_pt, end_pt)
 
-            cv2.imshow("res", cv_im)
-            cv2.waitKey()
-            """
+                cv2.imshow("res", image)
+                cv2.waitKey()
+
+    @staticmethod
+    def test_one_COCO():
+        """ Tests a a pair of images """
+
+        print("testing one image...")
+
+        Config.model_path = "/home/mmv/Documents/2.projects/JNN_detection/trained_models/dJNN_COCOsplit2/testmodel_last_split2.pt"
+        model_path = Config.model_path
+
+        model = DarkJNN()
+
+        checkpoint = torch.load(model_path)
+        model.load_state_dict(checkpoint['model'])
+        model.cuda()
+        model.eval()
+
+        coco_dataset = dset.CocoDetection(Config.coco_dataset_dir,
+                                          Config.coco_dataset_dir + "annotations/instances_val2017.json")
+
+        # (3m1, 3m6), (rbc1, rbc43), hp(33971473, 70609284), blizzard(1, 6), gen_electric(7, 31), warner(10, 18)
+        # goodyear(13, 20), airhawk(12, 1), gap(34, 36), levis(14, 30)
+        q_name = "000000024144"
+        t_name = "000000306700"
+        q_im = Image.open("/home/mmv/Documents/3.datasets/coco/val2017/" + q_name + ".jpg")
+        t_im = Image.open("/home/mmv/Documents/3.datasets/coco/val2017/" + t_name + ".jpg")
+
+        # find image id and (first) annotation
+        for id in coco_dataset.coco.imgs:
+            if coco_dataset.coco.imgs[id]['file_name'] == q_name + ".jpg":
+                break
+        for ann_id in coco_dataset.coco.anns:
+            if coco_dataset.coco.anns[ann_id]['image_id'] == id:
+                print(coco_dataset.coco.anns[ann_id])
+                break
+        qbox = coco_dataset.coco.anns[ann_id]['bbox']
+        qbox = [qbox[0], qbox[1], qbox[0] + qbox[2], qbox[1] + qbox[3]]
+        q_im = q_im.crop((qbox[0], qbox[1], qbox[2], qbox[3]))
+
+        w, h = t_im.size[0], t_im.size[1]
+        im_infos = (w, h, q_name, t_name)
+
+        qcv_im = np.array(q_im)
+        qcv_im = qcv_im[:, :, ::-1].copy()
+        cv_im = np.array(t_im)
+        cv_im = cv_im[:, :, ::-1].copy()
+
+        q_im = q_im.resize((Config.imq_w, Config.imq_h))
+        t_im = t_im.resize((Config.im_w, Config.im_h))
+
+        # To float tensors
+        q_im = torch.from_numpy(np.array(q_im)).float() / 255
+        t_im = torch.from_numpy(np.array(t_im)).float() / 255
+        img0 = q_im.permute(2, 0, 1)
+        img1 = t_im.permute(2, 0, 1)
+        img0 = torch.unsqueeze(img0, 0)
+        img1 = torch.unsqueeze(img1, 0)
+
+        with torch.no_grad():
+            #
+            img0, img1 = Variable(img0).cuda(), Variable(img1).cuda()
+
+            model_output = model(img0, img1, [])
+
+            im_info = {'width': im_infos[0], 'height': im_infos[1]}
+            output = [item[0].data for item in model_output]
+
+            detections = decode(output, im_info, conf_threshold=Config.conf_thresh, nms_threshold=Config.nms_thresh)
+
+            if len(detections) > 0:
+
+                for detection in detections:
+                    start_pt = (int(detection[0].item()), int(detection[1].item()))
+                    end_pt = (int(detection[2].item()), int(detection[3].item()))
+                    image = cv2.rectangle(cv_im, start_pt, end_pt, (0, 255, 0), 3)
+                    print(start_pt, end_pt)
+
+                cv2.imshow("q", qcv_im)
+                cv2.imshow("res", image)
+                cv2.waitKey()
+            else:
+                print("No detctions found")
+

@@ -1,4 +1,3 @@
-import re
 import random
 import numpy as np
 import xml.etree.ElementTree as ET
@@ -19,9 +18,10 @@ class DatasetJNN_VOC(Dataset):
         self.is_training = is_training
         self.image_paths = []
 
-        self.unseen_classes = ['cow', 'sheep', 'cat', 'aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'chair', 'diningtable', 'dog', 'horse', 'motorbike', 'person', 'pottedplant', 'sofa', 'train', 'tvmonitor']
-        #self.unseen_classes = ['cow', 'sheep', 'cat', 'aeroplane']
+
+        self.unseen_classes = ['cow', 'sheep', 'cat', 'aeroplane']
         #self.unseen_classes = ['bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'chair', 'diningtable', 'dog', 'horse', 'motorbike', 'person', 'pottedplant', 'sofa', 'train', 'tvmonitor']
+        # self.unseen_classes = ['cow', 'sheep', 'cat', 'aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'chair', 'diningtable', 'dog', 'horse', 'motorbike', 'person', 'pottedplant', 'sofa', 'train', 'tvmonitor']
 
         if "2007" in year:
             f = open(self.VOC_path + "VOC2007/ImageSets/Main/" + mode + ".txt", "r")
@@ -33,6 +33,8 @@ class DatasetJNN_VOC(Dataset):
             f.close()
         if not ("2007" in year) and not ("2012" in year):
             raise Exception('Ill defined dataset')
+
+        random.seed(123)
 
     def __getitem__(self, index):
 

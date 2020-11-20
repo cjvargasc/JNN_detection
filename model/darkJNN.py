@@ -55,12 +55,15 @@ class DarkJNN(nn.Module):
         self.joint3 = conv_bn_leaky(512, 256, kernel_size=3, return_module=True)
 
         self.conv4 = nn.Sequential(darknet19.layer4)
+        #self.joint4 = conv_bn_leaky(1024, 512, kernel_size=3, return_module=True)
 
         self.conv5 = nn.Sequential(darknet19.layer5)
+        #self.joint5 = conv_bn_leaky(2048, 1024, kernel_size=3, return_module=True)
 
         # detection layers
         self.conv6 = nn.Sequential(conv_bn_leaky(1024, 1024, kernel_size=3, return_module=True),
                                    conv_bn_leaky(1024, 1024, kernel_size=3, return_module=True))
+        #self.joint6 = conv_bn_leaky(2048, 1024, kernel_size=3, return_module=True)
 
         self.downsampler = conv_bn_leaky(512, 64, kernel_size=1, return_module=True)
 
@@ -90,11 +93,20 @@ class DarkJNN(nn.Module):
         output = self.joint3(output)
 
         output = self.conv4(output)
+        #qoutput = self.conv4(qoutput)
+        #output = torch.cat((output, qoutput), 1)
+        #output = self.joint4(output)
         shortcut = self.reorg(self.downsampler(output))
 
         output = self.conv5(output)
+        #qoutput = self.conv5(qoutput)
+        #output = torch.cat((output, qoutput), 1)
+        #output = self.joint5(output)
 
         output = self.conv6(output)
+        #qoutput = self.conv6(qoutput)
+        #output = torch.cat((output, qoutput), 1)
+        #output = self.joint6(output)
 
         output = torch.cat([shortcut, output], dim=1)
         output = self.conv7(output)

@@ -1,15 +1,17 @@
 class Config:
 
     ####### Datasets
-    dataset = "VOC"  # {VOC, coco, other}
-    # paths to [other] datasets
-    training_dir = "<path to dataset>/training/"
-    testing_dir = "<path to dataset>/testing/"
-    annotations_dir = "<path to dataset>/Annotations/"
+    dataset = "other"  # {VOC, coco, coco_split, other}
 
-    # paths to COCO and VOC
-    voc_dataset_dir = "<path to VOC>/VOCdevkit/"
-    coco_dataset_dir = "<path to coco>"
+    # paths to [other] datasets
+    training_dir = "/home/mmv/Documents/3.datasets/openlogo/preproc/3/training/"
+    testing_dir = "/home/mmv/Documents/3.datasets/openlogo/preproc/3/testing/"
+    annotations_dir = "/home/mmv/Documents/3.datasets/openlogo/Annotations/"
+    # path to VOC
+    voc_dataset_dir = "/home/mmv/Documents/3.datasets/VOCdevkit/"
+    # path to COCO
+    coco_dataset_dir = "/home/mmv/Documents/3.datasets/coco/"
+    coco_split = 4  # Defines the split to test for the VOC split experiment
 
     ####### Model params
     batch_size = 16
@@ -49,7 +51,7 @@ class Config:
     nms_thresh = .45
 
     # path to mAP repository
-    mAP_path = "<path to /Object-Detection-Metrics-master/>"
+    mAP_path = "/home/mmv/Documents/2.projects/Object-Detection-Metrics-master/"
 
     ####### Loss
     object_scale = 5
