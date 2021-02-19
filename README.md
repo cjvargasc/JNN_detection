@@ -30,23 +30,24 @@ JNN | 9.5 | 69.3 | 49.8 | 60.3 | 7.2 | 29.1 | 10.1 | 6.7 | 60.3 | 57.2 | 58.5 | 
 
 Testing on the top performing Open-Logodataset classes and the mAP results for the whole dataset
 
-Class | mAP(%) 
+Class | AP / mAP
 -------------|-----|
-anz_text               & 100.00%
-rbc                     & 98.86%
-blizzardentertainment   & 98.34%
-costco                  & 93.26%
-3m                      & 90.61%
-bosch_text             & 90.00%
-gap                     & 89.47%
-lexus                   & 88.92%
-generalelectric         & 83.32%
-hp                      & 82.81%
-levis                   & 79.36%
-airhawk                 & 79.17%
-danone                  & 79.02%
-armitron                & 77.73%
-google                  & 77.66%
+anz_text | 100.00
+rbc | 98.86
+blizzardentertainment | 98.34
+costco | 93.26
+3m | 90.61
+bosch_text | 90.00
+gap | 89.47
+lexus | 88.92
+generalelectric | 83.32
+hp | 82.81
+levis | 79.36
+airhawk | 79.17
+danone | 79.02
+armitron | 77.73
+google | 77.66
+all | 52.84
 
 ## Reference
 Joint Neural Networks for One-shot ObjectRecognition and Detection. Camilo Jose Vargas Cortes. School of Electronic Engineering and Computer Science. Queen Mary University of London. 2020.
