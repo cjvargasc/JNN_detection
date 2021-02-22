@@ -54,13 +54,7 @@ Joint Neural Networks for One-shot ObjectRecognition and Detection. Camilo Jose 
 
 ## Examples
 
-<img src="https://github.com/cjvargasc/JNN_detection/blob/master/imgs/3mquery.png" width="25%">-<img src="https://github.com/cjvargasc/JNN_detection/blob/master/imgs/3mtarget.png" width="25%">
-
-<img src="https://github.com/cjvargasc/JNN_detection/blob/master/imgs/BEQuery.png" width="25%">-<img src="https://github.com/cjvargasc/JNN_detection/blob/master/imgs/BEtarget.png" width="25%">
-
-<img src="https://github.com/cjvargasc/JNN_detection/blob/master/imgs/GEquery.04.2020.png" width="25%">-<img src="https://github.com/cjvargasc/JNN_detection/blob/master/imgs/GEtarget.png" width="25%">
-
-<img src="https://github.com/cjvargasc/JNN_detection/blob/master/imgs/athalonquery.png" width="25%">-<img src="https://github.com/cjvargasc/JNN_detection/blob/master/imgs/athalontarget.png" width="25%">
+<img src="https://github.com/cjvargasc/JNN_detection/blob/master/Results.png" width="100%">
 
 ## acknowledgement
 This code is based on the following repositories:
