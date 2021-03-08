@@ -11,7 +11,7 @@ def test():
 
 
 if __name__ == "__main__":
-    #train()
-    #test()
+    train()
+    test()
     #Tester.test_one_OL()
-    Tester.test_one_COCO()
+    #Tester.test_one_COCO()
